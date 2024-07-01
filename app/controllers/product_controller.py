@@ -6,6 +6,7 @@ from flask import request, jsonify
 from app.models.Consignment import Consignment
 from app.models.Product import Product
 from app.models.Seller import Seller
+from app.models.Transaction import Transaction
 from app.models.User import User
 
 @app.route("/product", methods=["GET"])
@@ -23,7 +24,7 @@ def get_products():
         products = Product.query.order_by(Product.id.desc()).all()
         products_list = []
         for product in products:
-            if search.lower() not in product.name.lower():
+            if search.lower() not in product.name.lower() or product.stock == -1:
                 continue
             product = {
                 "id": product.id,
@@ -64,6 +65,8 @@ def manage_product(id):
     product = Product.query.get_or_404(id)
 
     if request.method == "GET":
+        if product.stock == -1:
+            return jsonify({"message": "Product not found"}), 404
         return jsonify({
             "id": product.id,
             "name": product.name,
@@ -88,12 +91,15 @@ def manage_product(id):
 
     if request.method == "DELETE":
         consignment = Consignment.query.filter_by(product_id=id).first()
-        db.session.delete(consignment)
-        db.session.delete(product)
+        transaction = Transaction.query.filter_by(consignment_id=consignment.id).first()
+        if transaction and (transaction.order_status not in "cancelled", "completed"):
+            return jsonify({"message": "Product cannot be deleted because it is in a transaction"}), 400
+        product.name = "Product deleted"
+        product.stock = -1
         db.session.commit()
         return jsonify({"message": "Product deleted successfully"})
 
-@app.route("/product/current", methods=["POST", "GET", "PUT", "DELETE"])
+@app.route("/product/current", methods=["POST", "GET", "PUT"])
 @jwt_required()
 def manage_product_current():
     current_id = get_jwt_identity()
@@ -108,7 +114,7 @@ def manage_product_current():
         products_list = []
         for consignment in consignments:
             product = Product.query.get(consignment.product_id)
-            if search.lower() not in product.name.lower():
+            if search.lower() not in product.name.lower() or product.stock == -1:
                 continue
             product_data = {
                 "id": product.id,

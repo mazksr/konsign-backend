@@ -40,6 +40,8 @@ def manage_transactions():
             product = Product.query.get(consignment.product_id)
             if search.lower() not in product.name.lower():
                 continue
+            if not product:
+                product.name = "Product not found"
             transaction_data = {
                 "id": transaction.id,
                 "item_name": product.name,
@@ -138,6 +140,8 @@ def trnsc():
         for transaction in transactions:
             consignment = Consignment.query.get(transaction.consignment_id)
             product = Product.query.get(consignment.product_id)
+            if not product:
+                product.name = "Product not found"
             if search.lower() not in product.name.lower():
                 continue
             transaction_data = {
@@ -164,6 +168,8 @@ def orders():
         transactions_list = []
         for consignment in consignments:
             product = Product.query.get(consignment.product_id)
+            if not product:
+                product.name = "Product not found"
             if search.lower() not in product.name.lower():
                 continue
             transactions = Transaction.query.filter_by(consignment_id=consignment.id).order_by(Transaction.id.asc()).all()

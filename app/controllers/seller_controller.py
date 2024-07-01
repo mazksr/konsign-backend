@@ -52,7 +52,6 @@ def manage_seller(id):
     
     if request.method == "PUT":
         data = request.json
-        seller.user_id = data["user_id"]
         seller.seller_balance = data["seller_balance"]
         seller.bank = data["bank"]
         seller.bank_number = data["bank_number"]

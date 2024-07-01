@@ -79,7 +79,8 @@ def user_id(id):
     if request.method == "PUT":
         user.is_admin = request.json["is_admin"] if "is_admin" in request.json else False
         user.username = request.json["username"]
-        user.password = request.json["password"]
+        if "password" in request.json and request.json["password"]:
+            user.password = request.json["password"]
         user.email = request.json["email"]
         user.name = request.json["name"]
         user.address = request.json["address"]
@@ -121,3 +122,18 @@ def usr():
         user.phone_number = request.json["phone_number"]
         db.session.commit()
         return jsonify({"message": "User updated successfully"})
+
+@app.route("/user/seller/<int:id>", methods=["GET"])
+@jwt_required()
+def usr_slr(id):
+    if request.method == "GET":
+        seller = Seller.query.filter_by(user_id=id).first()
+        value = {
+            "id": seller.id,
+            "user_id": seller.user_id,
+            "seller_balance": seller.seller_balance,
+            "bank": seller.bank,
+            "bank_number": seller.bank_number,
+            "ewallet_number": seller.ewallet_number
+        }
+        return jsonify(value)
