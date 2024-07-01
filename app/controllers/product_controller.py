@@ -92,8 +92,9 @@ def manage_product(id):
     if request.method == "DELETE":
         consignment = Consignment.query.filter_by(product_id=id).first()
         transaction = Transaction.query.filter_by(consignment_id=consignment.id).first()
-        if transaction and (transaction.order_status not in "cancelled", "completed"):
-            return jsonify({"message": "Product cannot be deleted because it is in a transaction"}), 400
+        if transaction and (transaction.order_status not in ("canceled", "completed")):
+            print(transaction.order_status, transaction.id)
+            return jsonify({"message": "Product cannot be deleted because it is in an ongoing transaction"}), 400
         product.name = "Product deleted"
         product.stock = -1
         db.session.commit()
